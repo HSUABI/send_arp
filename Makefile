@@ -1,6 +1,6 @@
-all : pcap_test
+all : send_arp
 
-pcap_test: main.o printarr.o protocol_check.o swap_endian.o hex_to_ip.o
+send_arp: main.o printarr.o protocol_check.o swap_endian.o hex_to_ip.o
 	g++ -g -o pcap_parser main.o printarr.o protocol_check.o swap_endian.o hex_to_ip.o -lpcap
 
 hex_to_ip.o:
