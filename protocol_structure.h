@@ -52,4 +52,17 @@
 		u_short th_win;		/* window */
 		u_short th_sum;		/* checksum */
 		u_short th_urp;		/* urgent pointer */
+	};
+
+	/* ARP header */
+	struct sniff_arp { 
+	    u_short htype;    /* Hardware Type           */ 
+    	    u_short ptype;    /* Protocol Type           */ 
+	    char hlen;        /* Hardware Address Length */ 
+	    char plen;        /* Protocol Address Length */ 
+	    u_short oper;     /* Operation Code          */ 
+	    char sha[6];      /* Sender hardware address */ 
+	    char spa[4];      /* Sender IP address       */ 
+	    char tha[6];      /* Target hardware address */ 
+	    char tpa[4];      /* Target IP address       */ 
 };
