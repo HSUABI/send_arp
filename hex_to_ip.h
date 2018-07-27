@@ -1,0 +1,1 @@
+int hex_to_ip(unsigned int hex, char* ip_str);
