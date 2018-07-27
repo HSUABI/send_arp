@@ -9,12 +9,12 @@
 
 
 void usage() {
-  printf("syntax: pcap_test <interface>\n");
-  printf("sample: pcap_test wlan0\n");
+  printf("syntax: send_arp <interface> <sender ip> <target ip>\n");
+  printf("sample: pcap_test wlan0 192.168.10.34 192.168.10.1\n");
 }
 
 int main(int argc, char* argv[]) {
-  if (argc != 2) {
+  if (argc != 4) {
     usage();
     return -1;
   }
@@ -53,35 +53,6 @@ int main(int argc, char* argv[]) {
     if (res == 0) continue;
     if (res == -1 || res == -2) break;
     
-    if(ip_check(swap_word_endian(ethernet->ether_type))
-      && tcp_check(ip->ip_p))
-    {
-      printf("Destination MacAddress\t:");
-      printarr(ethernet->ether_dhost,ETHER_ADDR_LEN);
-      printf("Source MacAddress\t:");
-      printarr(ethernet->ether_shost,ETHER_ADDR_LEN);
-      printf("Total length\t\t:%2hu\n",swap_word_endian(ip->ip_len));
-      
-      hex_to_ip(ip->ip_src,ip_src_str);   // Change hex value to readable ip
-      hex_to_ip(ip->ip_dst,ip_dst_str);   // Change hex value to readable ip
-
-      printf("source ip\t\t:%s\n",ip_src_str);
-      printf("destination ip\t\t:%s\n",ip_dst_str);
-      printf("source port\t\t:%hu\n",swap_word_endian(tcp->th_sport));
-      printf("destination port\t:%hu\n",swap_word_endian(tcp->th_dport));
-    
-      size_data = swap_word_endian(ip->ip_len)-size_ip-size_tcp;
-      printf("data length\t\t:%2hu\n",size_data);
-
-      if(size_data > 0)
-      {
-        printf("Data\t\t\t:");
-        printarr(data,size_data > 16 ? 16 : size_data );
-      }
-      else  printf("No data\n");
-
-      printf("\n");
-    }
   }
 
   pcap_close(handle);
