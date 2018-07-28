@@ -1,6 +1,7 @@
 #include "swap_endian.h"
 
-int swap_word_endian(unsigned short swap)
+int swap_word_endian(unsigned short swapper)
 {
-	return (swap << 8 | swap >> 8);
+	unsigned short swappee = swapper << 8 | swapper >> 8 ;
+	return swappee;
 }

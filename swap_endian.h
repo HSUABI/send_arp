@@ -1,1 +1,1 @@
-int swap_word_endian(unsigned short swap);
+int swap_word_endian(unsigned short swapper);
