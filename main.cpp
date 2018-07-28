@@ -51,11 +51,11 @@ int main(int argc, char* argv[]) {
 
   char arp_request[42];    
 
-  char* ip_sender_str = argv[2];    // readable ip 
-  char* ip_target_str = argv[3];    // readable ip
-  char ip_sender[4];
-  char ip_target[4];
-  char ip_attacker[4];  //My IP Address
+  char* ip_sender_str = argv[2];	// readable ip 
+  char* ip_target_str = argv[3];    	// readable ip
+  char ip_sender[4];			// Victim ip
+  char ip_target[4];			// Gateway ip usaully
+  char ip_attacker[4]; 			// My IP Address
 
   char mac_broadcast[6] = {0xFF , 0xFF , 0xFF , 0xFF , 0xFF , 0xFF};
   char mac_sender[6] = {0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00};
@@ -71,9 +71,9 @@ int main(int argc, char* argv[]) {
 
   fd = socket(AF_INET, SOCK_DGRAM, 0);
 
-  ifr.ifr_addr.sa_family = AF_INET; //I want to get an IPv4 IP address
+  ifr.ifr_addr.sa_family = AF_INET;		 //I want to get an IPv4 IP address
 
-  strncpy(ifr.ifr_name, "ens33", IFNAMSIZ-1); //I want IP address attached to "eth0"
+  strncpy(ifr.ifr_name, "ens33", IFNAMSIZ-1);	 //I want IP address attached to "eth0"
 
   ioctl(fd, SIOCGIFADDR, &ifr);
 
@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
   arp = (struct sniff_arp*)(arp_request+14);
 
   strcpy((char*)(ethernet->ether_dhost) , mac_broadcast);
-  memcpy((ethernet->ether_shost) , mac_attacker ,6);  //strcpy doesn't work so i use memcpy
+  memcpy((ethernet->ether_shost) , mac_attacker ,6);  		//strcpy doesn't work so i use memcpy
   ethernet->ether_type = swap_word_endian(ETHERTYPE_ARP);
 
   arp->htype = swap_word_endian(ARP_HTYPE);
@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
   arp->hlen = ARP_HLEN;
   arp->plen = ARP_PLEN;
   arp->oper = swap_word_endian(ARP_OPER_REQ);
-  memcpy(arp->sha , mac_attacker ,6); //strcpy doesn't work so i use memcpy
+  memcpy(arp->sha , mac_attacker ,6); 				//strcpy doesn't work so i use memcpy
   strcpy(arp->spa , ip_attacker);
   strcpy(arp->tha , mac_sender);
   strcpy(arp->tpa , ip_sender);
@@ -142,9 +142,9 @@ int main(int argc, char* argv[]) {
     arp = (struct sniff_arp*)(packet + 14);
 
 
-   	 if(arp_check(swap_word_endian(ethernet->ether_type))
-		&& swap_word_endian(arp->oper) == ARP_OPER_REP
-		&&!strcmp(arp->spa , ip_sender)	 )
+   	 if(arp_check(swap_word_endian(ethernet->ether_type))	// Is it ARP protocol?
+		&& swap_word_endian(arp->oper) == ARP_OPER_REP	// Is it arp reply ?
+		&&!strcmp(arp->spa , ip_sender)	 )		// Is it sender ip (victim)?
   	  {
 		printf("operation is %x\n",swap_word_endian(arp->oper));
 		printarr((unsigned char*)packet,42);
