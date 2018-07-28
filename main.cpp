@@ -148,6 +148,9 @@ int main(int argc, char* argv[]) {
   	  {
 		printf("operation is %x\n",swap_word_endian(arp->oper));
 		printarr((unsigned char*)packet,42);
+		memcpy(mac_sender , arp->sha , 6);		//strcpy doesn't work so i use memcpy
+		printarr((unsigned char*)arp->sha , 6);
+		printarr((unsigned char*)mac_sender , 6);
  	   }
 
 
