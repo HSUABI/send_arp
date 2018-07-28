@@ -19,6 +19,7 @@
 #define ARP_HLEN 0X06
 #define ARP_PLEN 0X04
 #define ARP_OPER_REQ 0X0001
+#define ARP_OPER_REP 0X0002
 
 void usage() {
   printf("syntax: send_arp <interface> <sender ip> <target ip>\n");
@@ -130,18 +131,29 @@ int main(int argc, char* argv[]) {
   strcpy(arp->tpa , ip_sender);
 /*************************************************************************************************/
 
+        printf("send arp request\n");
+        pcap_sendpacket(handle ,(unsigned char*)arp_request , 42);
+
   while (true) {
     res = pcap_next_ex(handle, &header, &packet);
 
     int i=0;
-    
-    if(i%10000==0)  
-      {
-        printf("send arp request\n");
-        pcap_sendpacket(handle ,(unsigned char*)arp_request , 42);
-      }
+    ethernet = (struct sniff_ethernet*)packet;
+    arp = (struct sniff_arp*)(packet + 14);
 
-    i++;
+
+   	 if(arp_check(swap_word_endian(ethernet->ether_type))
+		&& swap_word_endian(arp->oper) == ARP_OPER_REP
+		&&!strcmp(arp->spa , ip_sender)	 )
+  	  {
+		printf("operation is %x\n",swap_word_endian(arp->oper));
+		printarr((unsigned char*)packet,42);
+ 	   }
+
+
+
+
+
     if (res == 0) continue;
     if (res == -1 || res == -2) break;
    
