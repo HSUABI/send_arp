@@ -110,28 +110,28 @@ int main(int argc, char* argv[]) {
   } 
   if (success) memcpy(mac_attacker, ifr.ifr_hwaddr.sa_data, 6);
   /*************************************************************************************************/
+    
+  /*        Set Arp request packet      */
+  ethernet = (struct sniff_ethernet*)arp_request;
+  arp = (struct sniff_arp*)(arp_request+14);
 
+  strcpy((char*)(ethernet->ether_dhost) , mac_broadcast);
+  memcpy((ethernet->ether_shost) , mac_attacker ,6);  //strcpy doesn't work so i use memcpy
+  ethernet->ether_type = swap_word_endian(ETHERTYPE_ARP);
 
+  arp->htype = swap_word_endian(ARP_HTYPE);
+  arp->ptype = swap_word_endian(ARP_PTYPE);
+  arp->hlen = ARP_HLEN;
+  arp->plen = ARP_PLEN;
+  arp->oper = swap_word_endian(ARP_OPER_REQ);
+  memcpy(arp->sha , mac_attacker ,6); //strcpy doesn't work so i use memcpy
+  strcpy(arp->spa , ip_attacker);
+  strcpy(arp->tha , mac_sender);
+  strcpy(arp->tpa , ip_sender);
+/*************************************************************************************************/
 
   while (true) {
     res = pcap_next_ex(handle, &header, &packet);
-
-    ethernet = (struct sniff_ethernet*)arp_request;
-    arp = (struct sniff_arp*)(arp_request+14);
-
-    strcpy((char*)(ethernet->ether_dhost) , mac_broadcast);
-    memcpy((ethernet->ether_shost) , mac_attacker ,6);  //strcpy doesn't work so i use memcpy
-    ethernet->ether_type = swap_word_endian(ETHERTYPE_ARP);
-
-    arp->htype = swap_word_endian(ARP_HTYPE);
-    arp->ptype = swap_word_endian(ARP_PTYPE);
-    arp->hlen = ARP_HLEN;
-    arp->plen = ARP_PLEN;
-    arp->oper = swap_word_endian(ARP_OPER_REQ);
-    memcpy(arp->sha , mac_attacker ,6); //strcpy doesn't work so i use memcpy
-    strcpy(arp->spa , ip_attacker);
-    strcpy(arp->tha , mac_sender);
-    strcpy(arp->tpa , ip_sender);
 
     int i=0;
     
