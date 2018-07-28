@@ -1,12 +1,24 @@
 #include <pcap.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <netinet/in.h> 
+#include <sys/ioctl.h> 
+#include <net/if.h>  
+#include <unistd.h> 
 #include "protocol_structure.h"
 #include "printarr.h"
 #include "protocol_check.h"
 #include "swap_endian.h"
 #include "hex_to_ip.h"
 #define ETHER_LEN 14
-
+#define ETHERTYPE_ARP 0X0806
+#define ARP_HTYPE 0X0001
+#define ARP_PTYPE 0X0800
+#define ARP_HLEN 0X06
+#define ARP_PLEN 0X04
+#define ARP_OPER_REQ 0X0001
 
 void usage() {
   printf("syntax: send_arp <interface> <sender ip> <target ip>\n");
@@ -27,31 +39,112 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
+  //Default variables
+  struct pcap_pkthdr* header;
+  const u_char* packet;
+  int res;
+
+  // My variables , structures 
+  struct sniff_ethernet *ethernet;
+  struct sniff_arp *arp;
+
+  char arp_request[42];    
+
+  char* ip_sender_str = argv[2];    // readable ip 
+  char* ip_target_str = argv[3];    // readable ip
+
+  char mac_broadcast[6] = {0xFF , 0xFF , 0xFF , 0xFF , 0xFF , 0xFF};
+  char mac_sender[6] = {0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00};
+  char mac_attacker[6];   // My Mac Address
+
+  char ip_sender[4];
+  char ip_target[4];
+  char ip_attacker[4];  //My IP Address
+
+
+  /*        Get my IP Address      */
+  int fd;
+  struct ifreq ifr;
+
+  fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+  ifr.ifr_addr.sa_family = AF_INET; //I want to get an IPv4 IP address
+
+  strncpy(ifr.ifr_name, "ens33", IFNAMSIZ-1); //I want IP address attached to "eth0"
+
+  ioctl(fd, SIOCGIFADDR, &ifr);
+
+  close(fd);
+  memcpy(ip_attacker,&((((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr).s_addr),4);
+  /*************************************************************************************************/
+
+
+  /*        Get my Mac Address      */
+  struct ifconf ifc; 
+  char buf[1024]; 
+  bool success = false; 
+
+  int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP); 
+  if (sock == -1) { /* handle error*/ }; 
+
+  ifc.ifc_len = sizeof(buf); 
+  ifc.ifc_buf = buf; 
+  if (ioctl(sock, SIOCGIFCONF, &ifc) == -1) { /* handle error */ } 
+
+  ifreq* it = ifc.ifc_req; 
+  const ifreq* const end = it + (ifc.ifc_len / sizeof(ifreq)); 
+
+  for (; it != end; ++it) { 
+      strcpy(ifr.ifr_name, it->ifr_name); 
+      if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) { 
+              if (! (ifr.ifr_flags & IFF_LOOPBACK)) { // don't count loopback 
+                      if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0) { 
+                              success = true; 
+                              break; 
+                      } 
+              } 
+      } 
+      else { /* handle error */ } 
+  } 
+  if (success) memcpy(mac_attacker, ifr.ifr_hwaddr.sa_data, 6);
+  /*************************************************************************************************/
+
+
+
   while (true) {
-    struct pcap_pkthdr* header;
-    const u_char* packet;
-    int res = pcap_next_ex(handle, &header, &packet);
+    res = pcap_next_ex(handle, &header, &packet);
 
-    // My variables , structures 
-   struct sniff_ethernet *ethernet;
-   struct sniff_ip *ip;
-   struct sniff_tcp *tcp;
-    u_int size_ip;
-    u_int size_tcp;
-    u_int size_data;
-    u_char* data;
-    ethernet = (struct sniff_ethernet*)packet;
-    ip = (struct sniff_ip*)(packet+ETHER_LEN);
-    size_ip = IP_HL(ip)*4; 
-    tcp = (struct sniff_tcp*)(packet+ETHER_LEN+size_ip);
-    size_tcp = TH_OFF(tcp)*4;
-    data = (u_char*)(packet+ETHER_LEN+size_ip+size_tcp);
-    char ip_src_str[16];    // readable ip 
-    char ip_dst_str[16];    // readable ip
+    inet_pton(AF_INET , ip_sender_str , ip_sender);
+    inet_pton(AF_INET , ip_target_str , ip_target);
 
+    ethernet = (struct sniff_ethernet*)arp_request;
+    arp = (struct sniff_arp*)(arp_request+14);
 
+    strcpy((char*)(ethernet->ether_dhost) , mac_broadcast);
+    memcpy((ethernet->ether_shost) , mac_attacker ,6);  //strcpy doesn't work so i use memcpy
+    ethernet->ether_type = swap_word_endian(ETHERTYPE_ARP);
+
+    arp->htype = swap_word_endian(ARP_HTYPE);
+    arp->ptype = swap_word_endian(ARP_PTYPE);
+    arp->hlen = ARP_HLEN;
+    arp->plen = ARP_PLEN;
+    arp->oper = swap_word_endian(ARP_OPER_REQ);
+    memcpy(arp->sha , mac_attacker ,6); //strcpy doesn't work so i use memcpy
+    strcpy(arp->spa , ip_attacker);
+    strcpy(arp->tha , mac_sender);
+    strcpy(arp->tpa , ip_sender);
+
+    int i=0;
+    
+    if(i%10000==0)  
+      {
+        printf("send arp request\n");
+        pcap_sendpacket(handle ,(unsigned char*)arp_request , 42);
+      }
+    i++;
     if (res == 0) continue;
     if (res == -1 || res == -2) break;
+   
     
   }
 
