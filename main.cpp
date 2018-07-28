@@ -52,14 +52,16 @@ int main(int argc, char* argv[]) {
 
   char* ip_sender_str = argv[2];    // readable ip 
   char* ip_target_str = argv[3];    // readable ip
+  char ip_sender[4];
+  char ip_target[4];
+  char ip_attacker[4];  //My IP Address
 
   char mac_broadcast[6] = {0xFF , 0xFF , 0xFF , 0xFF , 0xFF , 0xFF};
   char mac_sender[6] = {0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00};
   char mac_attacker[6];   // My Mac Address
 
-  char ip_sender[4];
-  char ip_target[4];
-  char ip_attacker[4];  //My IP Address
+  inet_pton(AF_INET , ip_sender_str , ip_sender);
+  inet_pton(AF_INET , ip_target_str , ip_target);
 
 
   /*        Get my IP Address      */
@@ -114,9 +116,6 @@ int main(int argc, char* argv[]) {
   while (true) {
     res = pcap_next_ex(handle, &header, &packet);
 
-    inet_pton(AF_INET , ip_sender_str , ip_sender);
-    inet_pton(AF_INET , ip_target_str , ip_target);
-
     ethernet = (struct sniff_ethernet*)arp_request;
     arp = (struct sniff_arp*)(arp_request+14);
 
@@ -141,6 +140,7 @@ int main(int argc, char* argv[]) {
         printf("send arp request\n");
         pcap_sendpacket(handle ,(unsigned char*)arp_request , 42);
       }
+
     i++;
     if (res == 0) continue;
     if (res == -1 || res == -2) break;
