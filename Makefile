@@ -1,10 +1,7 @@
 all : send_arp
 
-send_arp: main.o printarr.o protocol_check.o swap_endian.o hex_to_ip.o
-	g++ -g -o send_arp main.o printarr.o protocol_check.o swap_endian.o hex_to_ip.o -lpcap
-
-hex_to_ip.o:
-	g++ -g -c -o hex_to_ip.o hex_to_ip.cpp
+send_arp: main.o printarr.o protocol_check.o swap_endian.o 
+	g++ -g -o send_arp main.o printarr.o protocol_check.o swap_endian.o -lpcap
 
 swap_endian.o:
 	g++ -g -c -o swap_endian.o swap_endian.cpp

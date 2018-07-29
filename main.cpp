@@ -11,7 +11,6 @@
 #include "printarr.h"
 #include "protocol_check.h"
 #include "swap_endian.h"
-#include "hex_to_ip.h"
 #define ETHER_LEN 14
 #define ETHERTYPE_ARP 0X0806
 #define ARP_HTYPE 0X0001
@@ -161,7 +160,6 @@ int main(int argc, char* argv[]) {
   while (true) {
     res = pcap_next_ex(handle, &header, &packet);
 
-    int i=0;
     ethernet = (struct sniff_ethernet*)packet;
     arp = (struct sniff_arp*)(packet + 14);
 
