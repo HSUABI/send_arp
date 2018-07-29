@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
 
   ifr.ifr_addr.sa_family = AF_INET;		 //I want to get an IPv4 IP address
 
-  strncpy(ifr.ifr_name, "ens33", IFNAMSIZ-1);	 //I want IP address attached to "eth0"
+  strncpy(ifr.ifr_name, dev, IFNAMSIZ-1);	 //I want IP address attached to "eth0"
 
   ioctl(fd, SIOCGIFADDR, &ifr);
 
@@ -177,8 +177,6 @@ int main(int argc, char* argv[]) {
       printf("send arp reply packet\n");
       pcap_sendpacket(handle ,(unsigned char*)arp_reply_packet , 42);
     }
-
-
 
 
 
