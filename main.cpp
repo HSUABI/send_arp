@@ -131,8 +131,8 @@ int main(int argc, char* argv[]) {
   strcpy(arp->tpa , ip_sender);
 /*************************************************************************************************/
 
-        printf("send arp request\n");
-        pcap_sendpacket(handle ,(unsigned char*)arp_request , 42);
+  printf("send arp request\n");
+  pcap_sendpacket(handle ,(unsigned char*)arp_request , 42);
 
   while (true) {
     res = pcap_next_ex(handle, &header, &packet);
@@ -142,16 +142,16 @@ int main(int argc, char* argv[]) {
     arp = (struct sniff_arp*)(packet + 14);
 
 
-   	 if(arp_check(swap_word_endian(ethernet->ether_type))	// Is it ARP protocol?
-		&& swap_word_endian(arp->oper) == ARP_OPER_REP	// Is it arp reply ?
-		&&!strcmp(arp->spa , ip_sender)	 )		// Is it sender ip (victim)?
-  	  {
-		printf("operation is %x\n",swap_word_endian(arp->oper));
-		printarr((unsigned char*)packet,42);
-		memcpy(mac_sender , arp->sha , 6);		//strcpy doesn't work so i use memcpy
-		printarr((unsigned char*)arp->sha , 6);
-		printarr((unsigned char*)mac_sender , 6);
- 	   }
+    if(arp_check(swap_word_endian(ethernet->ether_type))	// Is it ARP protocol?
+      && swap_word_endian(arp->oper) == ARP_OPER_REP	// Is it arp reply ?
+      &&!strcmp(arp->spa , ip_sender)	 )		// Is it sender ip (victim)?
+    {
+      printf("operation is %x\n",swap_word_endian(arp->oper));
+      printarr((unsigned char*)packet,42);
+      memcpy(mac_sender , arp->sha , 6);		//strcpy doesn't work so i use memcpy
+      printarr((unsigned char*)arp->sha , 6);
+      printarr((unsigned char*)mac_sender , 6);
+    }
 
 
 
